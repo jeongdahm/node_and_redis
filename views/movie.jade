@@ -1,0 +1,18 @@
+extends layout
+//상세페이지 
+block content
+  h1= title
+  form(method="POST" action="/movies/"+title)
+    input(type="hidden" name="_method" value="put")
+    ul
+      li
+        Movie title: #{title}
+      li
+        director: input(type="text" name="director" value=director)
+      li
+        actor: input(type="text" name="actor" value=actor)
+    input(type="submit" value="update")
+  p
+  form(method="POST" action="/movies/"+title)
+    input(type="hidden" name="_method" value="delete")
+    input(type="submit" value="delete")
