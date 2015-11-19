@@ -1,0 +1,16 @@
+extends layout
+
+block content
+  h1= title
+  form(method="POST" action="/movies/modify")
+    input(type="hidden" name="movie_id" value=movie.movie_id)
+    p 영화 이름:
+      input(type="text" name="title" value=movie.title)
+    p 영화 감독:
+      input(type="text" name="director" value=movie.director)
+    p 영화 출시연도:
+      input(type="text" name="year" value=movie.year)
+    p 영화 줄거리:
+      textarea(cols="50" rows="10" name="synopsis" value=movie.synopsis)
+    p
+    input(type="submit" value="수정하기")

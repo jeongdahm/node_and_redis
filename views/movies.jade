@@ -1,0 +1,10 @@
+extends layout
+
+block content
+  h1= title
+  each movie in movies
+    li
+      a(href="/movies/"+movie.movie_id) #{movie.title}  
+      
+  p
+  a(href="/movies/add" class="bold") Add Moive
