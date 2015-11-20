@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>채팅 클라이언트</title>
+<script src="/socket.io/socket.io.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" type="text/javascript"></script>
+<script>
+	var chat_id='';
+	var socket = null;
+	$(document).ready(function(){
+		socket =io.connect();
+		//끝낼때 처리 
+		$(window).unload(function(){
+			chat_out();
+		});
+		//접속 성공 했을 떄 결과를 받음 
+		socket.on('chat_join',function(data){
+			data=JSON.parse(data);
+			console.log(data);
+			$("#chat_user_list").empty();
+			for (var i=0 ; i < data.length ; i++){
+				var user_id = data[i];
+				if(user_id == chat_id){
+					$("#chat_user_list").append('<li><strong>'+user_id+'(me)</string></li>');
+					$("#chat_id").attr('disabled',true);
+				}else{
+					$("#chat_user_list").append('<li>'+user_id+'</li>');
+				}
+			}
+			$("#now_user_cnt").html(data.length);
+		
+		});
+		socket.on('chat_fail',function(data){
+			data = JSON.parse(data);
+			alert(data+"님은 이미 접속된 ID입니다.");
+		});
+		socket.on('someone_leaved',function(data){
+			data =JSON.parse(data);
+			$("#chat_user_list").empty();
+			for (var i = 0 ; i < data.length; i++){
+				var user_id= data[i];
+				if(user_id == chat_id){
+					$("#chat_user_list").append('<li><strong>'+user_id+'</string></li>');
+				}else{
+					$("#chat_user_list").append('<li>'+user_id+'</li>');
+				}
+			}
+			$("#now_user_cnt").html(data.length);
+			console.log('data'+data);
+		});
+		socket.on('message_go',function(data){
+			data = decodeURIComponent(data);
+			data = data.replace(/&/g,'&amp;');
+			data = data.replace(/\"/g,'&quot;');
+			data = data.replace(/\'/g,'&#39');
+			data = data.replace(/</g, '&lt;');
+			data = data.replace(/>/g, '&gt;');
+			console.log(data);
+			$('#chat_list').append('<li>'+data+'</li>')
+			
+		});
+
+		socket.on('logs',function(data){
+			data = JSON.parse(data);
+			$("#chat_logs").empty();
+			for(var i =0 ;  i < data.length ; i++){
+				$("#chat_logs").append('<li>'+
+						data[i].log+'('+data[i].date+')'+'</li>');
+			}
+		});
+		socket.on('clogs',function(data){
+			data = decodeURIComponent(data);
+			data = JSON.parse(data);
+			console.log(data);
+			$("#chat_list").empty();
+			for(var i =0 ;  i < data.length ; i++){
+				
+				$("#chat_list").append('<li>'+
+						data[i].content+'</li>');
+			}
+			
+			
+		});
+	});
+	function chat_input(){
+		var encodedMsg = encodeURIComponent($('#chat_input').val());
+		socket.emit('message',JSON.stringify({chat_id:chat_id, message : encodedMsg}));
+		$("#chat_input").val('');
+	}
+	function chat_in(){//접속요청
+		socket.emit('chat_conn',JSON.stringify({chat_id:chat_id}));
+		$("#chat_list").html(''); //비워라 
+	}
+		
+	function connection(){
+		chat_id = $("#chat_id").val();
+		if(chat_id ==''|| chat_id =='ID 입력'){
+			alert("ID를 입력해주세요.");
+		}else{
+			chat_in();
+			$("#chat_form_no").slideUp();
+			$("#chat_form").slideDown();
+		}
+	}
+
+	function chat_out(){
+		
+		socket.emit('leave',JSON.stringify({chat_id:chat_id}));
+		$("#chat_id").attr('disabled',false);
+		$("#chat_id").val("ID 입력");
+		$("#chat_list").html('');
+		$("#chat_form").slideUp();
+		$("#chat_form_no").slideDown();
+		chat_id='';
+	}	
+</script>
+</head>
+<body>
+	<div id="contects">
+		<h1>채팅방</h1>
+		<div class="chat_content">
+			<div class="chat_login"><!-- 로그인 영역 -->
+				<input type="text" id="chat_id" value="ID 입력" onclick="$(this).val('');" />
+				&nbsp;&nbsp;<a href="javascript:connection();">접속하기</a>
+				<strong>현재접속자수</strong>:<span id="now_user_cnt">-</span>
+			</div>
+			<div id="chat_from_no">ID 입력 후 접속해주세요.</div>
+			<div id="chat_form" style="display:none;"><!-- 채팅창영역 -->
+				<ul id="chat_list"></ul>
+				<ul id="chat_user_list"></ul>
+				<div class="chat_input">
+				<input type="text" id="chat_input" value="대화글을 입력하세요"
+					onclick="$(this).val('') ;" />
+					<a href="javascript:chat_input();">입력</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+					<a href="javascript:chat_out();">나가기</a>
+				</div>
+			</div>
+			<div class="chat_history"><ul id="chat_logs"></ul></div><!-- 접속로그 영역 -->
+		</div>
+	</div>
+</body>
+</html>
